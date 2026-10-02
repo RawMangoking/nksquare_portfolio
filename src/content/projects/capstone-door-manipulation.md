@@ -46,4 +46,4 @@ We don't assume randomization or modular policies will win. The point is to meas
 
 ## Next
 
-Add domain randomization of the door, train both versions of the policies, and test them on unseen doors.
+Add domain randomization of the door, train both versions of the policies, and test them on new door conditions.
