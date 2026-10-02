@@ -1,0 +1,64 @@
+---
+import { Image } from 'astro:assets';
+import Hexes from './Hexes.astro';
+import Icon from './Icon.astro';
+import { profile } from '../data/site';
+import photo from '../assets/misc/profile.jpg';
+---
+<aside class="profile" aria-label="Profile summary">
+  <div class="avatar brackets">
+    <Image src={photo} alt={`Photo of ${profile.name}`} widths={[200, 400]} sizes="190px" class="avatar-img" />
+  </div>
+
+  <dl class="fields">
+    <div><dt class="label">Name</dt><dd class="value">{profile.name}</dd></div>
+    <div><dt class="label">Occupation</dt><dd class="value">{profile.occupation}</dd></div>
+    <div><dt class="label">Studying at</dt><dd class="value">{profile.studyingAt}</dd></div>
+    <div>
+      <dt class="label">Availability</dt>
+      <dd><button type="button" class="pill pill--solid" data-open="dlg-hire" data-sfx>{profile.availability}<Hexes /></button></dd>
+    </div>
+    <div>
+      <dt class="label">Social</dt>
+      <dd><button type="button" class="pill" data-open="dlg-connect" data-sfx>Open connection<Icon name="link" /></button></dd>
+    </div>
+    <div>
+      <dt class="label">Resume</dt>
+      <dd><a class="pill" href={profile.resume} download data-sfx>Download resume<Icon name="download" /></a></dd>
+    </div>
+  </dl>
+
+  <div class="motto">
+    {profile.motto ? (
+      <><p class="label motto-label">Motto:</p><p class="motto-text">{profile.motto}</p></>
+    ) : (
+      <><p class="label motto-label">Off duty:</p><p class="motto-text">{profile.hobby}</p></>
+    )}
+  </div>
+</aside>
+
+<style>
+  .profile { display: flex; flex-direction: column; gap: 1.4rem; min-height: 100%; }
+  .avatar { padding: 10px; aspect-ratio: 1; max-width: 190px; }
+  .avatar-ph {
+    width: 100%; height: 100%; display: grid; place-content: center; justify-items: center; gap: 0.4rem;
+    background: radial-gradient(circle at 50% 35%, rgb(var(--accent-rgb) / 0.22), transparent 60%), #0d0b0b;
+    color: rgb(var(--accent-rgb) / 0.8); font-family: var(--font-label); font-size: var(--step--2); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .avatar-ph :global(.icon) { width: 3.4rem; height: 3.4rem; }
+  .fields { margin: 0; display: grid; gap: 1.05rem; }
+  .fields dd { margin: 0.25rem 0 0; }
+  .pill {
+    display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 0.5rem;
+    padding: 0.2rem 0.45rem 0.2rem 0.5rem; min-height: 2.1rem;
+    font-family: var(--font-display); font-size: var(--step-0); text-transform: uppercase; letter-spacing: 0.03em; text-align: left; text-decoration: none;
+    color: var(--accent); background: transparent; border: 1.5px solid var(--accent); cursor: pointer;
+  }
+  .pill:hover { background: rgb(var(--accent-rgb) / 0.14); }
+  .pill--solid { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .pill--solid:hover { background: rgb(var(--accent-rgb) / 0.85); }
+  .motto { margin-top: auto; padding-top: 1rem; }
+  .motto-label { color: var(--accent); margin-bottom: 0.4rem; }
+  .motto-text { font-family: var(--font-label); font-size: var(--step--1); letter-spacing: 0.08em; text-transform: uppercase; color: var(--soft); margin: 0; }
+  .avatar-img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+</style>

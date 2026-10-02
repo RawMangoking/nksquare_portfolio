@@ -1,0 +1,75 @@
+---
+import { Image } from 'astro:assets';
+import HUD from '../layouts/HUD.astro';
+import WorldMap from '../components/WorldMap.astro';
+import Icon from '../components/Icon.astro';
+import hand from '../assets/misc/hand-hologram.png';
+import { profile, about } from '../data/site';
+---
+<HUD title="Profile" active="profile" description={`About ${profile.name}: robotics student, traveller and flute player.`}>
+  <h1 class="stage-title">Profile: {profile.name}</h1>
+
+  <div class="about">
+    <div class="sections">
+      <section class="row">
+        <h2 class="label">Who I am</h2>
+        <p>I'm a final-year B.Tech Computer Science student at Shiv Nadar University Chennai, specialising in IoT, with a CGPA of {profile.cgpa}. I work on robots end to end: from wiring and microcontrollers, through simulation, to the learning and cloud systems that run them.</p>
+      </section>
+      <section class="row">
+        <h2 class="label">Outside engineering</h2>
+        <p>{about.paragraph}</p>
+      </section>
+      <section class="row">
+        <h2 class="label">Leadership</h2>
+        <p><strong>{about.guild.title}.</strong> {about.guild.text}</p>
+      </section>
+      <section class="row">
+        <h2 class="label">Get in touch</h2>
+        <div class="links">
+          <button type="button" class="btn btn--solid" data-open="dlg-hire">{profile.availability}</button>
+          <button type="button" class="btn" data-open="dlg-connect">Open connection <Icon name="link" /></button>
+          <a class="btn btn--ghost" href={profile.resume} download>Download resume <Icon name="download" /></a>
+        </div>
+      </section>
+    </div>
+
+    <figure class="figure brackets">
+      <Image src={hand} alt="Red wireframe render of the robot hand from my capstone, with its forearm and wrist." widths={[320, 480, 640]} sizes="(max-width: 900px) 70vw, 320px" />
+      <figcaption>My capstone hand, rendered straight from its MuJoCo model.</figcaption>
+    </figure>
+  </div>
+
+  <section class="explorer" id="explorer" aria-labelledby="explorer-title">
+    <div class="ex-head">
+      <h2 id="explorer-title">Explorer</h2>
+      <p><b>13</b> countries visited</p>
+    </div>
+    <WorldMap />
+  </section>
+</HUD>
+
+<style>
+  .about { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 320px); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: start; }
+  .sections { display: grid; gap: 1.6rem; max-width: 62ch; }
+  .row { display: grid; grid-template-columns: 9.5rem 1fr; gap: 1rem; }
+  .row .label { color: var(--muted); text-align: right; line-height: 1.6; }
+  .row p { margin: 0; }
+  .row strong { color: var(--text); font-weight: normal; }
+  .links { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .figure { margin: 0; padding: 12px; }
+  .figure img { width: 100%; background: radial-gradient(circle at 50% 30%, rgb(var(--accent-rgb) / 0.12), transparent 65%); }
+  .figure figcaption { margin-top: 0.6rem; font-family: var(--font-label); font-size: var(--step--2); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-align: center; }
+  .explorer { margin-top: 3rem; }
+  .ex-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; border-bottom: 1px solid var(--line); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+  .ex-head h2 { font-size: var(--step-2); color: var(--accent); }
+  .ex-head p { margin: 0; font-family: var(--font-display); text-transform: uppercase; color: var(--soft); }
+  .ex-head b { color: var(--green); font-size: var(--step-2); }
+  @media (max-width: 900px) {
+    .about { grid-template-columns: 1fr; }
+    .figure { max-width: 300px; margin: 0 auto; }
+  }
+  @media (max-width: 560px) {
+    .row { grid-template-columns: 1fr; gap: 0.3rem; }
+    .row .label { text-align: left; }
+  }
+</style>

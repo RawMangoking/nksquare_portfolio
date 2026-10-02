@@ -1,0 +1,32 @@
+---
+import Hexes from './Hexes.astro';
+import { nav, type NavKey } from '../data/site';
+interface Props { active: NavKey | null; vertical?: boolean }
+const { active, vertical = false } = Astro.props;
+---
+<nav class:list={['dock', { 'dock--vertical': vertical }]} aria-label="Main">
+  {nav.map((item) => (
+    <a href={item.href} class:list={['tab', { 'is-active': item.key === active }]} aria-current={item.key === active ? 'page' : undefined} data-sfx>
+      <span class="tab-title">{item.label}<Hexes /></span>
+      <span class="tab-hint">{item.hint}</span>
+    </a>
+  ))}
+</nav>
+
+<style>
+  .dock { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.6rem; }
+  .tab { display: block; text-decoration: none; background: rgb(36 36 37 / 0.92); border-top: 2px solid transparent; transition: background-color 0.15s; }
+  .tab:hover { background: #2e2c2d; }
+  .tab-title {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.3rem;
+    padding: 0.3rem 0.45rem 0.1rem; font-family: var(--font-display); font-size: var(--step-1); text-transform: uppercase; color: var(--text);
+  }
+  .tab-title :global(.hexes) { color: rgb(255 255 255 / 0.12); }
+  .tab-hint { display: block; padding: 0 0.45rem 0.45rem; font-family: var(--font-label); font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .tab.is-active { border-top-color: var(--accent); }
+  .tab.is-active .tab-title { background: var(--accent); color: var(--on-accent); }
+  .tab.is-active .tab-title :global(.hexes) { color: rgb(0 0 0 / 0.3); }
+  .dock--vertical { grid-template-columns: 1fr; gap: 0.8rem; }
+  .dock--vertical .tab-title { font-size: var(--step-2); }
+  .dock--vertical .tab-hint { font-size: var(--step--2); }
+</style>

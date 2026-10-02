@@ -1,0 +1,165 @@
+---
+import Icon from './Icon.astro';
+import Dock from './Dock.astro';
+import SystemPanel from './SystemPanel.astro';
+import { profile, type NavKey } from '../data/site';
+const { active } = Astro.props as { active: NavKey | null };
+---
+<!-- Open connection -->
+<dialog id="dlg-connect" class="dlg" aria-labelledby="dlg-connect-title">
+  <div class="dlg-head"><h2 id="dlg-connect-title">Open connection</h2><button type="button" class="x" data-close aria-label="Close"><Icon name="close" /></button></div>
+  <p class="dlg-lead">Pick a channel. I usually reply within a day or two.</p>
+  <ul class="channels">
+    <li><a href={`mailto:${profile.email}`} class="channel"><Icon name="mail" /><span><b>Email</b>{profile.email}</span></a></li>
+    <li><a href={profile.linkedin} class="channel" target="_blank" rel="noopener"><Icon name="linkedin" /><span><b>LinkedIn</b>Narenkarthik Kesavamoorthy</span></a></li>
+    <li><a href={profile.github} class="channel" target="_blank" rel="noopener"><Icon name="github" /><span><b>GitHub</b>@{profile.githubHandle}</span></a></li>
+    <li><a href={profile.steam} class="channel" target="_blank" rel="noopener"><Icon name="gamepad" /><span><b>Steam</b>{profile.steamHandle}</span></a></li>
+  </ul>
+</dialog>
+
+<!-- Contact form (opens the visitor's email app; no server needed) -->
+<dialog id="dlg-hire" class="dlg" aria-labelledby="dlg-hire-title">
+  <div class="dlg-head"><h2 id="dlg-hire-title">{profile.availability}</h2><button type="button" class="x" data-close aria-label="Close"><Icon name="close" /></button></div>
+  <p class="dlg-lead">Internships, research positions or a project idea: I'd love to hear about it.</p>
+  <form id="hire-form" class="form" novalidate>
+    <label><span class="flabel">How should I call you?</span><input name="name" autocomplete="name" placeholder="Your name" required /></label>
+    <label><span class="flabel">Sending from</span><input name="email" type="email" autocomplete="email" placeholder="you@example.com" required /></label>
+    <label><span class="flabel">Message</span><textarea name="message" rows="6" placeholder="Hi, I'm writing to you about…" required></textarea></label>
+    <p class="form-note" id="hire-note">Sending opens your email app with this message filled in.</p>
+    <div class="form-actions">
+      <button type="submit" class="btn btn--solid">Send message</button>
+      <button type="button" class="btn btn--ghost" data-close>Discard</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Visual settings -->
+<dialog id="dlg-settings" class="dlg" aria-labelledby="dlg-settings-title">
+  <div class="dlg-head"><h2 id="dlg-settings-title">Visual settings</h2><button type="button" class="x" data-close aria-label="Close"><Icon name="close" /></button></div>
+  <p class="dlg-lead">Saved in this browser only.</p>
+  <form id="settings-form" class="form">
+    <fieldset>
+      <legend class="flabel">Highlight colour</legend>
+      <div class="swatches">
+        {[['red', '#e84a4a'], ['amber', '#e8a33a'], ['cyan', '#3ecfd6'], ['green', '#5de26a']].map(([k, c]) => (
+          <label class="swatch"><input type="radio" name="accent" value={k} /><span style={`--sw:${c}`}></span><span class="sr-only">{k}</span><span class="sw-name">{k}</span></label>
+        ))}
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend class="flabel">Text size</legend>
+      <div class="seg">
+        <label><input type="radio" name="text" value="normal" /><span>Normal</span></label>
+        <label><input type="radio" name="text" value="large" /><span>Large</span></label>
+        <label><input type="radio" name="text" value="larger" /><span>Larger</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend class="flabel">Effects</legend>
+      <div class="seg">
+        <label><input type="radio" name="effects" value="on" /><span>On</span></label>
+        <label><input type="radio" name="effects" value="off" /><span>Off (no animation or scanlines)</span></label>
+      </div>
+    </fieldset>
+    <div class="form-actions">
+      <button type="button" class="btn btn--solid" data-close>Done</button>
+      <button type="button" class="btn btn--ghost" id="settings-reset">Reset to default</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Credits -->
+<dialog id="dlg-credits" class="dlg" aria-labelledby="dlg-credits-title">
+  <div class="dlg-head"><h2 id="dlg-credits-title">Credits</h2><button type="button" class="x" data-close aria-label="Close"><Icon name="close" /></button></div>
+  <dl class="credits">
+    <div><dt>Built by</dt><dd>Narenkarthik Kesavamoorthy</dd></div>
+    <div><dt>Design</dt><dd>Based on the free “Web Portfolio Design” game-UI template by Alex Dimitrov, from the Figma Community</dd></div>
+    <div><dt>Fonts</dt><dd>Big Shoulders Display, Iceland and Iceberg, under the SIL Open Font License</dd></div>
+    <div><dt>Map data</dt><dd>Natural Earth (public domain)</dd></div>
+    <div><dt>Teams</dt><dd>Capstone with Naren Kumar C and Lakshmi Narayanan P, mentored by Dr. Priya GL. Saber by the SUTD ROAR Lab team.</dd></div>
+    <div><dt>Running on</dt><dd>Astro static build, served by nginx in Docker on my own VPS</dd></div>
+  </dl>
+</dialog>
+
+<!-- Media viewer -->
+<dialog id="dlg-viewer" class="dlg dlg--viewer" aria-labelledby="viewer-caption">
+  <div class="dlg-head"><h2 class="viewer-title" id="viewer-name">Viewer</h2><button type="button" class="x" data-close aria-label="Close viewer"><Icon name="close" /></button></div>
+  <div class="viewer-stage" id="viewer-stage"></div>
+  <div class="viewer-foot">
+    <button type="button" class="btn btn--ghost" id="viewer-prev" aria-label="Previous file"><Icon name="arrow-left" /></button>
+    <p id="viewer-caption" class="viewer-caption"></p>
+    <button type="button" class="btn btn--ghost" id="viewer-next" aria-label="Next file"><Icon name="arrow-right" /></button>
+  </div>
+</dialog>
+
+<!-- Mobile navigation -->
+<dialog id="dlg-nav" class="dlg dlg--sheet" aria-labelledby="dlg-nav-title">
+  <div class="dlg-head"><h2 id="dlg-nav-title">Navigation</h2><button type="button" class="x" data-close aria-label="Close navigation"><Icon name="close" /></button></div>
+  <Dock active={active} vertical />
+  <div class="sheet-system"><SystemPanel /></div>
+</dialog>
+
+<style>
+  .dlg {
+    width: min(560px, calc(100vw - 2rem)); max-height: calc(100vh - 3rem); padding: 1.2rem 1.4rem 1.4rem;
+    color: var(--soft); background: #0c0b0b; border: 1px solid var(--line); box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.12), 0 30px 80px rgb(0 0 0 / 0.8);
+  }
+  .dlg::backdrop { background: rgb(0 0 0 / 0.72); backdrop-filter: blur(3px); }
+  .dlg[open] { animation: dlg-in 0.18s ease-out; }
+  @keyframes dlg-in { from { opacity: 0; transform: translateY(8px); } }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.6rem; }
+  .dlg-head h2 { font-size: var(--step-2); color: var(--accent); }
+  .x { background: none; border: 1px solid var(--line); color: var(--soft); width: 2.2rem; height: 2.2rem; display: grid; place-items: center; cursor: pointer; }
+  .x:hover { border-color: var(--accent); color: var(--accent); }
+  .dlg-lead { font-family: var(--font-label); font-size: var(--step--2); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.2rem; }
+
+  .channels { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+  .channel { display: flex; align-items: center; gap: 0.9rem; padding: 0.7rem 0.8rem; border: 1px solid var(--line); text-decoration: none; color: var(--soft); word-break: break-word; }
+  .channel:hover { border-color: var(--accent); }
+  .channel :global(.icon) { width: 1.6rem; height: 1.6rem; color: var(--accent); }
+  .channel b { display: block; font-family: var(--font-display); font-weight: 800; text-transform: uppercase; color: var(--text); font-size: var(--step-1); }
+
+  .form { display: grid; gap: 1rem; }
+  .form label { display: grid; gap: 0.4rem; }
+  .flabel { font-family: var(--font-display); font-size: var(--step-1); text-transform: uppercase; color: var(--accent); }
+  .form input:not([type='radio']), .form textarea {
+    width: 100%; padding: 0.7rem 0.8rem; background: #000; border: 1.5px solid var(--line); color: var(--text);
+    font-family: var(--font-label); font-size: var(--step--1); letter-spacing: 0.06em;
+  }
+  .form input:focus, .form textarea:focus { outline: none; border-color: var(--accent); }
+  .form textarea { resize: vertical; }
+  .form [aria-invalid='true'] { border-color: var(--accent); }
+  .form-note { margin: 0; font-size: var(--step--1); color: var(--muted); }
+  .form-note.is-error { color: var(--accent); }
+  .form-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.4rem; }
+  .form-actions .btn { justify-content: center; }
+  fieldset { border: 0; padding: 0; margin: 0; }
+  legend { padding: 0; margin-bottom: 0.5rem; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+  .swatch { display: flex !important; align-items: center; gap: 0.5rem !important; cursor: pointer; grid-template-columns: none; }
+  .swatch input, .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .swatch span:first-of-type { width: 1.8rem; height: 1.8rem; background: var(--sw); border: 2px solid transparent; outline: 1px solid var(--line); }
+  .swatch input:checked + span { border-color: #000; outline: 2px solid var(--text); }
+  .swatch input:focus-visible + span { outline: 2px solid var(--text); outline-offset: 3px; }
+  .sw-name { text-transform: capitalize; font-size: var(--step--1); }
+  .seg { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .seg label { display: block; cursor: pointer; }
+  .seg span { display: block; padding: 0.4rem 0.8rem; border: 1px solid var(--line); font-size: var(--step--1); }
+  .seg input:checked + span { border-color: var(--accent); color: var(--text); background: rgb(var(--accent-rgb) / 0.16); }
+  .seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .credits { margin: 0; display: grid; gap: 0.9rem; }
+  .credits dt { font-family: var(--font-label); font-size: var(--step--2); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .credits dd { margin: 0.15rem 0 0; color: var(--soft); }
+  .credits a { color: var(--text); }
+
+  .dlg--viewer { width: min(1180px, calc(100vw - 2rem)); }
+  .viewer-title { font-family: var(--font-label) !important; font-size: var(--step--1) !important; letter-spacing: 0.14em; color: var(--text) !important; }
+  .viewer-stage { display: grid; place-items: center; background: #050505; border: 1px solid var(--line); min-height: 40vh; }
+  .viewer-stage :global(img), .viewer-stage :global(video) { max-height: 70vh; width: auto; max-width: 100%; }
+  .viewer-foot { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1rem; margin-top: 0.8rem; }
+  .viewer-caption { margin: 0; text-align: center; font-size: var(--step--1); }
+
+  .dlg--sheet { width: min(460px, calc(100vw - 1rem)); }
+  .sheet-system { margin-top: 1.4rem; }
+</style>

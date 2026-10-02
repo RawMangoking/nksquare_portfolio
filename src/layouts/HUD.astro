@@ -1,0 +1,161 @@
+---
+import '../styles/global.css';
+import TopBar from '../components/TopBar.astro';
+import ProfilePanel from '../components/ProfilePanel.astro';
+import QuestPanel from '../components/QuestPanel.astro';
+import SystemPanel from '../components/SystemPanel.astro';
+import Dock from '../components/Dock.astro';
+import Dialogs from '../components/Dialogs.astro';
+import Icon from '../components/Icon.astro';
+import { profile, type NavKey } from '../data/site';
+
+interface Props {
+  title: string;
+  description?: string;
+  active: NavKey | null;
+  /** Show the profile and quest panels inline on small screens (home page). */
+  panelsOnMobile?: boolean;
+}
+const { title, description = `${profile.name}: robotics and embedded systems projects, research and achievements.`, active, panelsOnMobile = false } = Astro.props;
+const fullTitle = active === 'home' ? `${profile.name} | Robotics & embedded systems` : `${title} | ${profile.name}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL('/og.png', Astro.site);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#000000" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preload" href="/fonts/big-shoulders-800.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/iceland.woff2" as="font" type="font/woff2" crossorigin />
+    <script is:inline>
+      // Apply saved visual settings before the first paint.
+      (function () {
+        var d = document.documentElement;
+        try {
+          var s = JSON.parse(localStorage.getItem('nk-settings') || '{}');
+          if (s.accent && s.accent !== 'red') d.dataset.accent = s.accent;
+          if (s.text && s.text !== 'normal') d.dataset.text = s.text;
+          if (s.effects === 'off') d.dataset.effects = 'off';
+          if (s.sound === 'on') d.dataset.sound = 'on';
+        } catch (e) {}
+        try {
+          if (location.pathname === '/' && !sessionStorage.getItem('nk-entered')) d.dataset.intro = '1';
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class:list={[{ 'panels-on-mobile': panelsOnMobile }]}>
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="hud">
+      <div class="hud-top"><TopBar /></div>
+
+      <div class="hud-left"><ProfilePanel /></div>
+
+      <div class="hud-center">
+        <main id="main" class="stage" tabindex="-1">
+          <div class="stage-body">
+            <slot />
+          </div>
+        </main>
+        <div class="dock-wrap"><Dock active={active} /></div>
+      </div>
+
+      <div class="hud-right">
+        <QuestPanel />
+        <div class="hud-system"><SystemPanel /></div>
+      </div>
+    </div>
+
+    <nav class="mobilebar" aria-label="Mobile">
+      <button type="button" class="mb mb--solid" data-open="dlg-nav" data-sfx><Icon name="menu" />Navigation</button>
+      <a class="mb" href="/profile/" data-sfx>Profile</a>
+    </nav>
+
+    <Dialogs active={active} />
+    <script>
+      import '../scripts/hud';
+    </script>
+  </body>
+</html>
+
+<style>
+  .skip { position: absolute; left: 1rem; top: -4rem; z-index: 200; background: var(--accent); color: var(--on-accent); padding: 0.5rem 1rem; text-decoration: none; }
+  .skip:focus { top: 1rem; }
+
+  .hud {
+    display: grid;
+    grid-template-columns: minmax(190px, 220px) minmax(0, 1fr) minmax(210px, 240px);
+    grid-template-areas: 'top top top' 'left center right';
+    column-gap: clamp(1rem, 2vw, 2rem);
+    max-width: 1760px; margin: 0 auto; padding: 1rem clamp(1rem, 2.4vw, 2.6rem) 0;
+  }
+  .hud-top { grid-area: top; }
+  .hud-left, .hud-right {
+    position: sticky; top: 1rem; align-self: start;
+    min-height: calc(100vh - 6rem); display: flex; flex-direction: column;
+    padding-bottom: 1.5rem;
+  }
+  .hud-left { grid-area: left; }
+  .hud-right { grid-area: right; }
+  .hud-system { margin-top: auto; padding-top: 1.5rem; }
+  .hud-center { grid-area: center; min-width: 0; display: flex; flex-direction: column; min-height: calc(100vh - 5.5rem); }
+
+  .stage {
+    position: relative; flex: 1;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgb(var(--accent-rgb) / 0.08), transparent 45%), rgb(12 10 10 / 0.6);
+    outline: none;
+  }
+  /* Accent ticks at the frame's bottom corners, as in the template */
+  .stage::before, .stage::after { content: ''; position: absolute; bottom: -1px; width: 10px; height: 10px; border-bottom: 2px solid var(--accent); }
+  .stage::before { left: -1px; border-left: 2px solid var(--accent); }
+  .stage::after { right: -1px; border-right: 2px solid var(--accent); }
+  .stage-body { padding: clamp(1.4rem, 3vw, 2.4rem) clamp(1rem, 4vw, 4rem) 3rem; }
+
+  .dock-wrap {
+    position: sticky; bottom: 0; z-index: 20;
+    margin-top: -1.6rem; padding: 0 clamp(0.5rem, 6%, 6rem) 1rem;
+  }
+  .dock-wrap::before { content: ''; position: absolute; inset: 1.6rem 0 0; background: linear-gradient(transparent, #000 55%); z-index: -1; }
+
+  .mobilebar { display: none; }
+
+  @media (max-width: 1100px) {
+    .hud { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'top' 'center' 'left' 'right'; row-gap: 2rem; padding-bottom: 6rem; }
+    .hud-left, .hud-right { position: static; min-height: 0; display: none; padding-bottom: 0; }
+    .panels-on-mobile .hud-left, .panels-on-mobile .hud-right { display: flex; }
+    .panels-on-mobile .hud-left :global(.profile) { display: grid; grid-template-columns: minmax(110px, 160px) 1fr; gap: 1.2rem; align-items: start; }
+    .panels-on-mobile .hud-left :global(.motto) { grid-column: 1 / -1; margin-top: 0; padding-top: 0; }
+    .hud-system { display: none; }
+    .hud-center { min-height: 0; }
+    .dock-wrap { display: none; }
+    .mobilebar {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+      padding: 0.6rem 0.8rem calc(0.6rem + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(transparent, #000 35%);
+    }
+    .mb {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.8rem;
+      font-family: var(--font-display); font-size: var(--step-1); text-transform: uppercase; text-decoration: none;
+      color: var(--accent); background: #000; border: 1.5px solid var(--accent); cursor: pointer;
+    }
+    .mb--solid { background: var(--accent); color: var(--on-accent); }
+  }
+  @media (max-width: 520px) {
+    .panels-on-mobile .hud-left :global(.profile) { grid-template-columns: 1fr; }
+    .panels-on-mobile .hud-left :global(.avatar) { max-width: 140px; }
+  }
+</style>

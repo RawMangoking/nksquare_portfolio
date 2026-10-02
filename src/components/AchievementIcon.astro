@@ -1,0 +1,23 @@
+---
+import type { Icon } from '../data/achievements';
+interface Props { icon: Icon }
+const { icon } = Astro.props;
+const glyphs: Record<Icon, string> = {
+  trophy: '<path d="M17 14h14v6a7 7 0 0 1-14 0zM17 16h-4a4 4 0 0 0 4 6M31 16h4a4 4 0 0 1-4 6M24 27v5M19 34h10"/>',
+  chip: '<rect x="16" y="16" width="16" height="16"/><rect x="21" y="21" width="6" height="6"/><path d="M20 12v4M24 12v4M28 12v4M20 32v4M24 32v4M28 32v4M12 20h4M12 24h4M12 28h4M32 20h4M32 24h4M32 28h4"/>',
+  stage: '<path d="M12 33h24M15 33v-9h18v9M24 24v-9M19 15h10M17 19l-4-5M31 19l4-5"/>',
+  cloud: '<path d="M16 31h17a5 5 0 0 0 0-10 8 8 0 0 0-15.5-1.5A5.8 5.8 0 0 0 16 31z"/>',
+  banner: '<path d="M17 12v24M17 13h15l-3 5 3 5H17"/>',
+  globe: '<circle cx="24" cy="24" r="11"/><path d="M13 24h22M24 13c-4 4-4 18 0 22M24 13c4 4 4 18 0 22"/>',
+  hand: '<path d="M18 34v-7l-3-4 1.5-1.5 3.5 3V14a1.5 1.5 0 0 1 3 0v8-10a1.5 1.5 0 0 1 3 0v10-8a1.5 1.5 0 0 1 3 0v9-6a1.5 1.5 0 0 1 3 0v10c0 5-3 8-6 9z"/>',
+  cap: '<path d="M10 20l14-6 14 6-14 6zM16 23v6c4 3 12 3 16 0v-6M38 20v8"/>',
+};
+---
+<svg viewBox="0 0 48 48" class="ach-icon" aria-hidden="true" focusable="false">
+  <path d="M24 3l18 10.5v21L24 45 6 34.5v-21z" fill="rgb(0 0 0 / .5)" stroke="currentColor" stroke-opacity=".35" />
+  <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" set:html={glyphs[icon]} />
+</svg>
+<style>
+  .ach-icon { width: 100%; height: 100%; filter: drop-shadow(0 0 6px currentColor); }
+  html[data-effects='off'] .ach-icon { filter: none; }
+</style>

@@ -1,0 +1,95 @@
+---
+import world from '../data/world.json';
+import { travel } from '../data/site';
+const visited = world.visited.map((v) => ({ ...v, note: travel[v.id]?.note }));
+// Tiny countries are hard to see, so they also get a marker dot.
+const dotted = new Set(['702', '690', '064', '144', '784', '756']);
+---
+<figure class="map">
+  <div class="map-frame">
+    <svg viewBox={`0 0 ${world.width} ${world.height}`} role="img" aria-labelledby="map-title">
+      <title id="map-title">World map with the 13 countries I've visited highlighted</title>
+      <path d={world.background} class="land" />
+      {visited.map((v) => (
+        <g class="country" tabindex="0" data-country={v.id} aria-label={v.name}>
+          <path d={v.d} />
+          {dotted.has(v.id) && <circle cx={v.c[0]} cy={v.c[1]} r="4.5" />}
+        </g>
+      ))}
+    </svg>
+    <div class="tip" id="map-tip" hidden><b></b><span></span></div>
+  </div>
+  <figcaption>
+    <ul class="chips">
+      {visited.sort((a, b) => a.name.localeCompare(b.name)).map((v) => (
+        <li><button type="button" data-country-chip={v.id}>{v.name}</button></li>
+      ))}
+    </ul>
+  </figcaption>
+  <script type="application/json" id="map-data" set:html={JSON.stringify(Object.fromEntries(visited.map((v) => [v.id, { name: v.name, note: v.note ?? '' }])))} />
+</figure>
+
+<script>
+  const data = JSON.parse(document.getElementById('map-data')?.textContent || '{}');
+  const frame = document.querySelector<HTMLElement>('.map-frame');
+  const tip = document.getElementById('map-tip');
+  if (frame && tip) {
+    const title = tip.querySelector('b')!, body = tip.querySelector('span')!;
+    let pinned: string | null = null;
+    const highlight = (id: string | null) => {
+      document.querySelectorAll('[data-country]').forEach((g) => g.classList.toggle('is-on', g.getAttribute('data-country') === id));
+      document.querySelectorAll('[data-country-chip]').forEach((c) => c.setAttribute('aria-pressed', String(c.getAttribute('data-country-chip') === id)));
+    };
+    const show = (id: string) => {
+      const g = document.querySelector<SVGGElement>(`[data-country="${id}"]`);
+      if (!g) return;
+      title.textContent = data[id].name;
+      body.textContent = data[id].note;
+      body.hidden = !data[id].note;
+      const fr = frame.getBoundingClientRect();
+      const r = g.getBoundingClientRect();
+      tip.hidden = false;
+      const x = Math.min(Math.max(r.left + r.width / 2 - fr.left, 90), fr.width - 90);
+      tip.style.left = `${x}px`;
+      tip.style.top = `${Math.max(r.top - fr.top, 0)}px`;
+      highlight(id);
+    };
+    const hide = () => { if (pinned) return show(pinned); tip.hidden = true; highlight(null); };
+    document.querySelectorAll<SVGGElement>('[data-country]').forEach((g) => {
+      const id = g.dataset.country!;
+      g.addEventListener('mouseenter', () => show(id));
+      g.addEventListener('mouseleave', hide);
+      g.addEventListener('focus', () => show(id));
+      g.addEventListener('blur', hide);
+      g.addEventListener('click', () => { pinned = pinned === id ? null : id; pinned ? show(id) : hide(); });
+    });
+    document.querySelectorAll<HTMLButtonElement>('[data-country-chip]').forEach((c) => {
+      const id = c.dataset.countryChip!;
+      c.addEventListener('click', () => { pinned = pinned === id ? null : id; pinned ? show(id) : hide(); });
+    });
+  }
+</script>
+
+<style>
+  .map { margin: 0; }
+  .map-frame { position: relative; border: 1px solid var(--line-soft); background: radial-gradient(ellipse at 50% 50%, rgb(var(--accent-rgb) / 0.06), transparent 70%), #050404; }
+  svg { display: block; width: 100%; height: auto; }
+  .land { fill: #1d1b1c; stroke: #050404; stroke-width: 0.4; }
+  .country { fill: rgb(var(--accent-rgb) / 0.75); stroke: var(--accent); stroke-width: 0.6; cursor: pointer; outline: none; transition: fill 0.15s; }
+  .country circle { fill: var(--accent); stroke: #000; stroke-width: 1; }
+  .country:hover, .country:focus-visible, .country.is-on { fill: var(--accent); filter: drop-shadow(0 0 4px rgb(var(--accent-rgb) / 0.9)); }
+  .country:focus-visible { stroke: #fff; stroke-width: 1.2; }
+  .tip {
+    position: absolute; transform: translate(-50%, calc(-100% - 10px)); pointer-events: none; z-index: 2;
+    min-width: 140px; max-width: 240px; padding: 0.45rem 0.6rem; background: #000; border: 1px solid var(--accent);
+    font-size: var(--step--1); line-height: 1.35;
+  }
+  .tip b { display: block; font-family: var(--font-display); text-transform: uppercase; color: var(--accent); font-size: var(--step-1); }
+  .chips { list-style: none; margin: 0.9rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chips button {
+    background: none; border: 1px solid var(--line); color: var(--soft); cursor: pointer; padding: 0.25rem 0.6rem;
+    font-family: var(--font-label); font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .chips button:hover, .chips button[aria-pressed='true'] { border-color: var(--accent); color: var(--text); }
+  .note { margin: 0.7rem 0 0; font-size: var(--step--1); color: var(--muted); }
+</style>

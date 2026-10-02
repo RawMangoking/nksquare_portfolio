@@ -1,0 +1,48 @@
+---
+import HUD from '../layouts/HUD.astro';
+import SwarmSim from '../components/SwarmSim.astro';
+---
+<HUD title="Home" active="home" panelsOnMobile>
+  <h1 class="hero-line">Five robots, no dispatcher. Every box goes to the robot with the shortest path.</h1>
+  <SwarmSim />
+
+  <div class="intro" role="dialog" aria-modal="true" aria-labelledby="intro-hi">
+    <div class="intro-inner">
+      <p class="hi" id="intro-hi" aria-label="Hi!">HI!</p>
+      <div class="intro-text">
+        <p class="intro-lead">Welcome to my personal website.</p>
+        <p>I'm Narenkarthik, and I build robots and the systems around them. I made this site to feel like a game interface.</p>
+        <p>You'll find my projects under <b>Creations</b>, my internships under <b>Logs</b>, and what I'm working on right now in the <b>Active quest</b>.</p>
+        <button type="button" class="btn" id="intro-enter">Enter the system</button>
+      </div>
+    </div>
+  </div>
+</HUD>
+
+<style>
+  .hero-line {
+    max-width: 46ch; margin: 0 auto 1.6rem; text-align: center;
+    font-family: var(--font-label); font-weight: normal; font-size: var(--step--1); letter-spacing: 0.16em; line-height: 1.7; color: var(--text);
+  }
+  .intro { display: none; }
+  :global(html[data-intro]) .intro {
+    display: grid; place-items: center; position: fixed; inset: 0; z-index: 150; padding: 2rem;
+    background: radial-gradient(80% 80% at 20% 50%, rgb(var(--accent-rgb) / 0.12), transparent 60%), #000;
+  }
+  :global(html[data-intro]) body { overflow: hidden; }
+  .intro-inner { display: flex; align-items: center; gap: clamp(1.5rem, 5vw, 4rem); max-width: 1000px; }
+  .hi {
+    margin: 0; font-family: var(--font-display); font-weight: 800; color: var(--accent);
+    font-size: clamp(7rem, 22vw, 17rem); line-height: 0.8; letter-spacing: -0.02em;
+    text-shadow: 0 0 40px rgb(var(--accent-rgb) / 0.35);
+    animation: hi-in 0.7s cubic-bezier(.2,.9,.3,1) both;
+  }
+  @keyframes hi-in { from { opacity: 0; transform: translateX(-24px); filter: blur(6px); } }
+  .intro-text { max-width: 44ch; font-family: var(--font-label); font-size: var(--step--1); letter-spacing: 0.06em; line-height: 1.7; text-transform: uppercase; animation: hi-in 0.7s 0.25s cubic-bezier(.2,.9,.3,1) both; }
+  .intro-lead { color: var(--text); }
+  .intro-text b { color: var(--accent); font-weight: normal; }
+  .intro .btn { margin-top: 0.8rem; }
+  @media (max-width: 640px) {
+    .intro-inner { flex-direction: column; align-items: flex-start; }
+  }
+</style>

@@ -1,0 +1,15 @@
+---
+// The small hexagon cluster from the template's header bars. Decorative only.
+const { class: cls = '' } = Astro.props;
+---
+<svg class={`hexes ${cls}`} viewBox="0 0 44 22" aria-hidden="true" focusable="false">
+  <g fill="none" stroke="currentColor" stroke-width="1.2">
+    <path d="M6 1h8l5 10-5 10H6L1 11z" />
+    <path d="M19 11h8l5 10" />
+    <path d="M19 11h8l5-10" />
+    <path d="M32 1h8l3 6M32 21h8l3-6" />
+  </g>
+</svg>
+<style>
+  .hexes { width: 2.6em; height: 1.3em; color: rgb(0 0 0 / 0.38); flex: none; }
+</style>

@@ -1,0 +1,65 @@
+---
+import Hexes from './Hexes.astro';
+import Icon from './Icon.astro';
+import { quest } from '../data/site';
+const done = quest.objectives.filter((o) => o.done).length;
+const total = quest.objectives.length;
+const { compact = false } = Astro.props;
+---
+<section class="quest" aria-labelledby="quest-title">
+  <div class="quest-head">
+    <h2 id="quest-title">Active quest</h2>
+    <Hexes />
+  </div>
+  <p class="sub label">{quest.label}</p>
+
+  <div class="quest-body">
+    <p class="label">Quest name</p>
+    <p class="value">{quest.name}</p>
+
+    <p class="label">Goal</p>
+    <p class="goal">{quest.goal}</p>
+
+    <p class="label">Progress <span class="count">{done}/{total}</span></p>
+    <div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax={total} aria-valuenow={done} aria-label="Capstone objectives completed">
+      <span style={`width:${(done / total) * 100}%`}></span>
+    </div>
+    {!compact && (
+      <ul class="objectives">
+        {quest.objectives.map((o) => (
+          <li class={o.done ? 'is-done' : ''}>
+            <span class="tick" aria-hidden="true">{o.done ? <Icon name="check" /> : null}</span>
+            <span><span class="sr-only">{o.done ? 'Done: ' : 'To do: '}</span>{o.text}</span>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    <p class="label">Party</p>
+    <p class="party">{quest.team.join(', ')} <span>Mentor: {quest.mentor}</span></p>
+
+    <a class="open" href={quest.href} data-sfx>Open quest file <Icon name="arrow-right" /></a>
+  </div>
+</section>
+
+<style>
+  .quest-head { display: flex; align-items: center; justify-content: space-between; background: var(--accent); color: var(--on-accent); padding: 0.25rem 0.5rem; }
+  .quest-head h2 { color: inherit; font-size: var(--step-1); }
+  .sub { background: rgb(var(--accent-rgb) / 0.18); padding: 0.45rem 0.5rem; color: var(--soft); }
+  .quest-body { border-left: 2px solid var(--accent); padding: 0.9rem 0 0.4rem 0.6rem; display: grid; gap: 0.3rem; }
+  .quest-body .label { margin-top: 0.55rem; }
+  .goal { font-family: var(--font-label); font-size: var(--step--2); letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.55; color: var(--muted); margin: 0; }
+  .count { color: var(--text); margin-left: 0.3em; }
+  .meter { height: 6px; background: var(--line-soft); }
+  .meter span { display: block; height: 100%; background: var(--accent); box-shadow: 0 0 8px rgb(var(--accent-rgb) / 0.7); }
+  .objectives { list-style: none; margin: 0.4rem 0 0; padding: 0; display: grid; gap: 0.35rem; }
+  .objectives li { display: grid; grid-template-columns: 0.95rem 1fr; gap: 0.45rem; align-items: start; font-size: var(--step--1); line-height: 1.25; color: var(--muted); }
+  .objectives li.is-done { color: var(--soft); }
+  .tick { width: 0.95rem; height: 0.95rem; margin-top: 0.1rem; border: 1px solid var(--line); display: grid; place-items: center; color: var(--accent); }
+  .is-done .tick { border-color: var(--accent); }
+  .tick :global(.icon) { width: 0.8rem; height: 0.8rem; }
+  .party { margin: 0; font-size: var(--step--1); color: var(--soft); }
+  .party span { display: block; color: var(--muted); }
+  .open { margin-top: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; font-family: var(--font-display); text-transform: uppercase; color: var(--accent); text-decoration: none; }
+  .open:hover { text-decoration: underline; }
+</style>

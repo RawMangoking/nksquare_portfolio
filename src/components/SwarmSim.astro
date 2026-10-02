@@ -1,0 +1,231 @@
+---
+// A simplified, in-browser version of the Swarm-Fleet bidding protocol.
+---
+<figure class="swarm">
+  <canvas id="swarm-canvas" role="img" aria-label="Animation: five robots in a warehouse bid for each new box; the robot with the shortest path wins and delivers it."></canvas>
+  <figcaption>
+    <ol class="swarm-log" id="swarm-log" aria-hidden="true"></ol>
+    <p class="swarm-cap">A simplified version of my <a href="/creations/swarm-fleet/">Swarm-Fleet</a> protocol, running live in your browser.</p>
+  </figcaption>
+</figure>
+
+<style>
+  .swarm { margin: 0; }
+  canvas { display: block; width: 100%; aspect-ratio: 2 / 1; background: #050404; border: 1px solid var(--line-soft); }
+  figcaption { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; margin-top: 0.7rem; flex-wrap: wrap; }
+  .swarm-log { list-style: none; margin: 0; padding: 0; min-height: 3.4em; font-family: var(--font-label); font-size: var(--step--2); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .swarm-log li:first-child { color: var(--text); }
+  .swarm-cap { margin: 0; font-size: var(--step--1); color: var(--muted); }
+  .swarm-cap a { color: var(--accent); }
+</style>
+
+<script>
+  const canvas = document.getElementById('swarm-canvas') as HTMLCanvasElement | null;
+  const logEl = document.getElementById('swarm-log');
+  if (canvas && logEl) {
+    const g = canvas.getContext('2d')!;
+    const COLS = 32, ROWS = 16;
+    const root = document.documentElement;
+    let accent = '#e84a4a';
+    const readAccent = () => { accent = getComputedStyle(root).getPropertyValue('--accent').trim() || '#e84a4a'; };
+    readAccent();
+    window.addEventListener('nk:settings', readAccent);
+
+    // Warehouse: two blocks of shelf rows with aisles between, docks on the left and right walls.
+    const shelf = new Set<string>();
+    for (let r = 2; r <= 13; r += 2) {
+      for (let c = 6; c <= 12; c++) shelf.add(`${c},${r}`);
+      for (let c = 19; c <= 26; c++) shelf.add(`${c},${r}`);
+    }
+    const free = (c: number, r: number) => c >= 0 && r >= 0 && c < COLS && r < ROWS && !shelf.has(`${c},${r}`);
+    type P = { c: number; r: number };
+    function bfs(a: P, b: P): P[] | null {
+      const key = (p: P) => p.c + ',' + p.r;
+      const prev = new Map<string, P | null>([[key(a), null]]);
+      const q: P[] = [a];
+      while (q.length) {
+        const p = q.shift()!;
+        if (p.c === b.c && p.r === b.r) {
+          const path: P[] = []; let cur: P | null = p;
+          while (cur) { path.unshift(cur); cur = prev.get(key(cur)) ?? null; }
+          return path;
+        }
+        for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const n = { c: p.c + dc, r: p.r + dr };
+          if (free(n.c, n.r) && !prev.has(key(n))) { prev.set(key(n), p); q.push(n); }
+        }
+      }
+      return null;
+    }
+
+    type Robot = { id: string; pos: P; path: P[]; step: number; task: Task | null; t: number };
+    type Task = { n: number; pickup: P; drop: P; stage: 'bidding' | 'assigned' | 'carrying' | 'done'; bids: { r: Robot; d: number }[]; winner: Robot | null; born: number };
+    const robots: Robot[] = [
+      { c: 1, r: 1 }, { c: 30, r: 1 }, { c: 1, r: 14 }, { c: 30, r: 14 }, { c: 16, r: 7 },
+    ].map((pos, i) => ({ id: 'ABCDE'[i], pos, path: [], step: 0, task: null, t: 0 }));
+    const tasks: Task[] = [];
+    let taskNo = 0;
+
+    function randomFree(cols: number[]): P {
+      for (;;) {
+        const c = cols[Math.floor(Math.random() * cols.length)];
+        const r = Math.floor(Math.random() * ROWS);
+        if (free(c, r) && !tasks.some((t) => t.stage !== 'done' && t.pickup.c === c && t.pickup.r === r)) return { c, r };
+      }
+    }
+    const shelfCols = [5, 13, 18, 27, 7, 9, 11, 20, 22, 24, 26];
+    function announce(now: number) {
+      const pickup = randomFree(shelfCols);
+      const drop = { c: Math.random() < 0.5 ? 0 : COLS - 1, r: 2 + Math.floor(Math.random() * (ROWS - 4)) };
+      const idle = robots.filter((r) => !r.task);
+      const bids = idle.map((r) => ({ r, d: (bfs(r.pos, pickup)?.length ?? 999) - 1 })).sort((a, b) => a.d - b.d);
+      const t: Task = { n: ++taskNo, pickup, drop, stage: 'bidding', bids, winner: null, born: now };
+      tasks.push(t);
+    }
+    function log(text: string) {
+      const li = document.createElement('li'); li.textContent = text;
+      logEl!.prepend(li);
+      while (logEl!.children.length > 3) logEl!.lastElementChild!.remove();
+    }
+
+    let W = 0, H = 0, cell = 0, ox = 0, oy = 0;
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas!.getBoundingClientRect();
+      canvas!.width = Math.round(rect.width * dpr); canvas!.height = Math.round(rect.height * dpr);
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      W = rect.width; H = rect.height;
+      cell = Math.min(W / COLS, H / ROWS); ox = (W - cell * COLS) / 2; oy = (H - cell * ROWS) / 2;
+    }
+    const cx = (p: P) => ox + (p.c + 0.5) * cell;
+    const cy = (p: P) => oy + (p.r + 0.5) * cell;
+
+    function robotXY(r: Robot): [number, number] {
+      if (!r.path.length || r.step >= r.path.length - 1) return [cx(r.pos), cy(r.pos)];
+      const a = r.path[r.step], b = r.path[r.step + 1];
+      return [cx(a) + (cx(b) - cx(a)) * r.t, cy(a) + (cy(b) - cy(a)) * r.t];
+    }
+
+    function draw(now: number) {
+      g.clearRect(0, 0, W, H);
+      // grid
+      g.strokeStyle = 'rgba(255,255,255,0.045)'; g.lineWidth = 1;
+      g.beginPath();
+      for (let c = 0; c <= COLS; c++) { g.moveTo(ox + c * cell, oy); g.lineTo(ox + c * cell, oy + ROWS * cell); }
+      for (let r = 0; r <= ROWS; r++) { g.moveTo(ox, oy + r * cell); g.lineTo(ox + COLS * cell, oy + r * cell); }
+      g.stroke();
+      // docks
+      g.fillStyle = 'rgba(255,255,255,0.06)';
+      g.fillRect(ox, oy + 2 * cell, cell, (ROWS - 4) * cell); g.fillRect(ox + (COLS - 1) * cell, oy + 2 * cell, cell, (ROWS - 4) * cell);
+      // shelves
+      g.fillStyle = '#2a2627';
+      shelf.forEach((k) => { const [c, r] = k.split(',').map(Number); g.fillRect(ox + c * cell + 1, oy + r * cell + 1, cell - 2, cell - 2); });
+
+      // tasks
+      for (const t of tasks) {
+        if (t.stage === 'done') continue;
+        if (t.stage === 'bidding') {
+          const age = (now - t.born) / 1000;
+          g.setLineDash([3, 4]); g.lineWidth = 1;
+          t.bids.forEach((b, i) => {
+            const [x, y] = robotXY(b.r);
+            g.strokeStyle = i === 0 && age > 0.6 ? accent : 'rgba(178,183,186,0.35)';
+            g.beginPath(); g.moveTo(x, y); g.lineTo(cx(t.pickup), cy(t.pickup)); g.stroke();
+            g.fillStyle = i === 0 && age > 0.6 ? accent : 'rgba(178,183,186,0.8)';
+            g.font = `${Math.max(10, cell * 0.55)}px Iceland, sans-serif`;
+            g.fillText(String(b.d), x + cell * 0.45, y - cell * 0.45);
+          });
+          g.setLineDash([]);
+        }
+        if (t.stage === 'assigned' && t.winner) {
+          const w = t.winner;
+          g.strokeStyle = accent; g.globalAlpha = 0.45; g.lineWidth = 1.5;
+          g.beginPath();
+          w.path.slice(w.step).forEach((p, i) => (i ? g.lineTo(cx(p), cy(p)) : g.moveTo(...robotXY(w))));
+          g.stroke(); g.globalAlpha = 1;
+        }
+        if (t.stage !== 'carrying') {
+          g.fillStyle = '#d9b43c';
+          const s = cell * 0.42; g.fillRect(cx(t.pickup) - s / 2, cy(t.pickup) - s / 2, s, s);
+        }
+        if (t.stage === 'carrying' && t.winner) {
+          g.strokeStyle = 'rgba(217,180,60,0.5)'; g.setLineDash([2, 4]);
+          const [x, y] = robotXY(t.winner);
+          g.beginPath(); g.moveTo(x, y); g.lineTo(cx(t.drop), cy(t.drop)); g.stroke(); g.setLineDash([]);
+        }
+      }
+      // robots
+      for (const r of robots) {
+        const [x, y] = robotXY(r);
+        const s = cell * 0.78;
+        g.shadowColor = accent; g.shadowBlur = root.dataset.effects === 'off' ? 0 : 10;
+        g.fillStyle = r.task ? accent : '#5b5556';
+        g.fillRect(x - s / 2, y - s / 2, s, s);
+        g.shadowBlur = 0;
+        if (r.task?.stage === 'carrying') { g.fillStyle = '#d9b43c'; const b = s * 0.42; g.fillRect(x - b / 2, y - b / 2, b, b); }
+        g.fillStyle = '#fff'; g.font = `${Math.max(10, cell * 0.6)}px 'Big Shoulders', sans-serif`;
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillText(r.id, x, y - s * 0.95);
+        g.textAlign = 'start'; g.textBaseline = 'alphabetic';
+      }
+    }
+
+    const STEP_MS = 120;
+    let last = 0, nextAnnounce = 0;
+    function update(now: number, dt: number) {
+      if (now > nextAnnounce && robots.some((r) => !r.task) && tasks.filter((t) => t.stage === 'bidding').length === 0) {
+        announce(now); nextAnnounce = now + 1300 + Math.random() * 900;
+      }
+      for (const t of tasks) {
+        if (t.stage === 'bidding' && now - t.born > 1400) {
+          const win = t.bids.find((b) => !b.r.task);
+          if (!win) { t.stage = 'done'; continue; }
+          t.winner = win.r; win.r.task = t; t.stage = 'assigned';
+          win.r.path = bfs(win.r.pos, t.pickup) ?? [win.r.pos]; win.r.step = 0; win.r.t = 0;
+          log(`Task ${String(t.n).padStart(2, '0')}: robot ${win.r.id} won with a ${win.d}-cell bid`);
+        }
+      }
+      for (const r of robots) {
+        if (!r.task || !r.path.length) continue;
+        if (r.step < r.path.length - 1) {
+          r.t += dt / STEP_MS;
+          while (r.t >= 1 && r.step < r.path.length - 1) { r.t -= 1; r.step++; r.pos = r.path[r.step]; }
+          if (r.step >= r.path.length - 1) r.t = 0;
+          continue;
+        }
+        const t = r.task;
+        if (t.stage === 'assigned') {
+          t.stage = 'carrying'; r.path = bfs(r.pos, t.drop) ?? [r.pos]; r.step = 0; r.t = 0;
+        } else if (t.stage === 'carrying') {
+          t.stage = 'done'; r.task = null; r.path = [];
+          log(`Task ${String(t.n).padStart(2, '0')}: delivered by robot ${r.id}`);
+        }
+      }
+      for (let i = tasks.length - 1; i >= 0; i--) if (tasks[i].stage === 'done') tasks.splice(i, 1);
+    }
+
+    let running = false, visible = true, raf = 0;
+    const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches || root.dataset.effects === 'off';
+    function frame(now: number) {
+      const dt = Math.min(now - (last || now), 100); last = now;
+      update(now, dt); draw(now);
+      raf = requestAnimationFrame(frame);
+    }
+    function sync() {
+      const should = visible && !document.hidden && !reduced();
+      if (should && !running) { running = true; last = 0; raf = requestAnimationFrame(frame); }
+      if (!should && running) { running = false; cancelAnimationFrame(raf); }
+      if (!should) draw(performance.now());
+    }
+    resize();
+    // Seed a static scene so reduced-motion visitors still see the bidding.
+    announce(performance.now() - 700);
+    draw(performance.now());
+    new ResizeObserver(() => { resize(); draw(performance.now()); }).observe(canvas);
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; sync(); }).observe(canvas);
+    document.addEventListener('visibilitychange', sync);
+    window.addEventListener('nk:settings', sync);
+    document.fonts?.ready.then(() => draw(performance.now()));
+    sync();
+  }
+</script>

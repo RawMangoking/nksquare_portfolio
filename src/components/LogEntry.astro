@@ -1,0 +1,50 @@
+---
+import { getImage } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import Icon from './Icon.astro';
+interface Props { entry: CollectionEntry<'logs'> }
+const { entry } = Astro.props;
+const d = entry.data;
+const records = await Promise.all(
+  d.records.map(async (r) => ({ ...r, full: await getImage({ src: r.image, width: Math.min(1600, r.image.width), format: 'webp' }) })),
+);
+---
+<article class="log" aria-labelledby={`log-${entry.id}`}>
+  <header class="log-bar">
+    <h2 id={`log-${entry.id}`}>Log entry: {d.title}</h2>
+    <p>Date: {d.period}</p>
+  </header>
+  <dl class="log-meta">
+    <div><dt>Location:</dt><dd>{d.org}, {d.location}</dd></div>
+    {d.supervisor && <div><dt>Supervisor:</dt><dd>{d.supervisor}</dd></div>}
+    <div><dt>Status:</dt><dd>{d.status}</dd></div>
+  </dl>
+  <div class="log-boxes">
+    {d.boxes.map((b) => (
+      <section class="box"><h3>{b.heading}</h3><p>{b.text}</p></section>
+    ))}
+  </div>
+  {records.length > 0 && (
+    <div class="log-records">
+      {records.map((r, i) => (
+        <button type="button" class:list={['btn', { 'sr-only': i > 0 }]} data-view={`records-${entry.id}`} data-full={r.full.src} data-w={r.full.attributes.width} data-h={r.full.attributes.height} data-caption={r.caption} data-name={`Visual record ${i + 1} of ${records.length}`}>
+          {i === 0 ? <>Preview visual records <Icon name="image" /></> : `Visual record ${i + 1}`}
+        </button>
+      ))}
+    </div>
+  )}
+</article>
+
+<style>
+  .log { max-width: 900px; margin: 0 auto; }
+  .log-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; background: var(--accent); color: var(--on-accent); padding: 0.25rem 0.6rem; }
+  .log-bar h2 { color: inherit; font-size: var(--step-1); }
+  .log-bar p { margin: 0; font-family: var(--font-label); font-size: var(--step--2); letter-spacing: 0.12em; text-transform: uppercase; }
+  .log-meta { margin: 0.7rem 0 1.4rem; display: grid; gap: 0.2rem; }
+  .log-meta div { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .log-meta dt { font-family: var(--font-label); font-size: var(--step--2); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text); }
+  .log-meta dd { margin: 0; font-family: var(--font-label); font-size: var(--step--2); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .log-boxes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; }
+  @media (max-width: 700px) { .log-boxes { grid-template-columns: 1fr; } }
+  .log-records { display: flex; justify-content: center; margin-top: 1.4rem; }
+</style>

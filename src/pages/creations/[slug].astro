@@ -1,0 +1,172 @@
+---
+import { getCollection, render } from 'astro:content';
+import { getImage } from 'astro:assets';
+import HUD from '../../layouts/HUD.astro';
+import Hexes from '../../components/Hexes.astro';
+import Icon from '../../components/Icon.astro';
+import { quest } from '../../data/site';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects', (p) => p.data.kind === 'main');
+  return projects.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+const { entry } = Astro.props;
+const d = entry.data;
+const { Content } = await render(entry);
+
+const files = await Promise.all(
+  d.files.map(async (f) => {
+    if (f.video) {
+      const poster = f.poster ? await getImage({ src: f.poster, width: Math.min(1200, f.poster.width), format: 'webp' }) : null;
+      return { ...f, kind: 'video', full: f.video, poster: poster?.src, w: undefined, h: undefined, dims: 'Video, loops' };
+    }
+    const full = await getImage({ src: f.image!, width: Math.min(1600, f.image!.width), format: 'webp' });
+    return { ...f, kind: 'image', full: full.src, poster: undefined, w: full.attributes.width, h: full.attributes.height, dims: `${f.image!.width} × ${f.image!.height}` };
+  }),
+);
+const isQuest = d.status === 'active';
+---
+<HUD title={d.cardTitle ?? d.title} active="creations" description={d.brief}>
+  <h1 class="stage-title">Creations</h1>
+
+  <div class="top">
+    <div class="details">
+      <section class="panel">
+        <div class="bar"><h2>Details</h2><Hexes /></div>
+        <div class="panel-body">
+          <p class="label">Project name</p>
+          <p class="pname">{d.title}</p>
+          <hr />
+          <p class="label">Brief</p>
+          <p class="brief">{d.brief}</p>
+          {d.period && <><p class="label">When</p><p class="small">{d.period}</p></>}
+          {d.team.length > 0 && (
+            <>
+              <p class="label">Team</p>
+              <p class="small">With {d.team.join(' and ')}{d.mentor && <>, mentored by {d.mentor}</>}</p>
+            </>
+          )}
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="bar"><h2>Technologies</h2><Hexes /></div>
+        <ul class="hexlist">
+          {d.tech.map((t) => <li><span>{t}</span></li>)}
+        </ul>
+      </section>
+
+      {d.highlight && (
+        <p class="hl"><b>{d.highlight.value}</b>{d.highlight.label}</p>
+      )}
+    </div>
+
+    <div class="explorer-col">
+      <section class="explorer brackets" aria-labelledby="fx-title">
+        <div class="fx-head">
+          <h2 id="fx-title">File explorer</h2>
+          <a href="/creations/" class="fx-close" aria-label="Back to all creations"><Icon name="close" /></a>
+        </div>
+        <p class="fx-path"><span>Location:</span> /creations/{entry.id}</p>
+        {files.length > 0 ? (
+          <ul class="fx-list">
+            {files.map((f) => (
+              <li>
+                <button type="button" class="fx-file" data-view={`files-${entry.id}`} data-kind={f.kind} data-full={f.full} data-poster={f.poster} data-w={f.w} data-h={f.h} data-caption={f.caption} data-name={f.name} data-sfx>
+                  <span class="fx-icon"><Icon name={f.kind === 'video' ? 'video' : 'image'} /></span>
+                  <span class="fx-meta"><span class="fx-name">{f.name}</span><span class="fx-dims">{f.dims}</span></span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="fx-empty">No visual records yet. Photos and clips for this project are on their way.</p>
+        )}
+      </section>
+
+      <div class="actions">
+        {d.repo && <a class="btn btn--solid" href={d.repo} target="_blank" rel="noopener">View source on GitHub <Icon name="github" /></a>}
+        <a class="btn btn--ghost" href="/creations/">Back to all creations</a>
+      </div>
+    </div>
+  </div>
+
+  {isQuest && (
+    <section class="quest-progress box" aria-labelledby="qp-title">
+      <h2 id="qp-title">Quest progress</h2>
+      <ul>
+        {quest.objectives.map((o) => (
+          <li class={o.done ? 'done' : ''}><span class="tick" aria-hidden="true">{o.done && <Icon name="check" />}</span><span><span class="sr-only">{o.done ? 'Done: ' : 'To do: '}</span>{o.text}</span></li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="about" aria-label="Case study">
+    <p class="label about-label">About:</p>
+    <div class="prose"><Content /></div>
+  </section>
+</HUD>
+
+<script>
+  // Wrap markdown tables so they scroll on small screens.
+  document.querySelectorAll('.prose table').forEach((t) => {
+    const w = document.createElement('div'); w.className = 'table-wrap';
+    t.replaceWith(w); w.append(t);
+  });
+</script>
+
+<style>
+  .top { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(1rem, 2.5vw, 2rem); align-items: start; }
+  .panel { border: 1px solid var(--line); background: rgb(10 9 9 / 0.75); margin-bottom: 1rem; }
+  .bar { display: flex; justify-content: space-between; align-items: center; background: var(--accent); color: var(--on-accent); margin: 8px 8px 0; padding: 0.15rem 0.45rem; }
+  .bar h2 { color: inherit; font-family: var(--font-label); font-weight: normal; font-size: var(--step--2); letter-spacing: 0.14em; }
+  .panel-body { padding: 0.9rem 0.9rem 1rem; }
+  .panel-body .label:not(:first-child) { margin-top: 0.8rem; }
+  .pname { margin: 0.2rem 0 0; font-family: var(--font-display); font-size: var(--step-1); color: var(--accent); text-transform: uppercase; line-height: 1.1; }
+  .brief { margin: 0.2rem 0 0; font-family: var(--font-display); font-size: var(--step-2); color: var(--accent); text-transform: uppercase; line-height: 1.05; }
+  .small { margin: 0.2rem 0 0; font-size: var(--step--1); }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 0.9rem 0 0; }
+  .hexlist { list-style: none; margin: 0; padding: 0.9rem; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .hexlist li {
+    padding: 2px; background: var(--accent);
+    clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
+  }
+  .hexlist span {
+    display: block; padding: 0.35rem 1rem; background: #0b0a0a; color: var(--accent);
+    clip-path: inherit; font-family: var(--font-display); text-transform: uppercase; font-size: var(--step-0); white-space: nowrap;
+  }
+  .hl { margin: 0.4rem 0 0; color: var(--muted); font-size: var(--step--1); }
+  .hl b { display: block; font-family: var(--font-display); font-weight: 800; font-size: var(--step-3); color: var(--green); line-height: 1; }
+
+  .explorer { padding: 10px; }
+  .fx-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding: 0.4rem 0.6rem 0.6rem; }
+  .fx-head h2 { font-family: var(--font-label); font-weight: normal; font-size: var(--step--2); letter-spacing: 0.14em; color: var(--text); }
+  .fx-close { color: var(--soft); display: grid; place-items: center; width: 2rem; height: 2rem; }
+  .fx-close:hover { color: var(--accent); }
+  .fx-path { margin: 0; padding: 0.6rem; border-bottom: 1px solid var(--line); font-family: var(--font-label); font-size: var(--step--2); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .fx-path span { color: var(--text); margin-right: 0.6rem; }
+  .fx-list { list-style: none; margin: 0; padding: 0.8rem 0.6rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.6rem 1rem; }
+  .fx-file { display: flex; align-items: center; gap: 0.8rem; width: 100%; padding: 0.3rem; background: none; border: 1px solid transparent; cursor: pointer; text-align: left; color: var(--soft); }
+  .fx-file:hover { border-color: var(--line); }
+  .fx-icon { width: 2.6rem; height: 2.6rem; display: grid; place-items: center; background: rgb(var(--accent-rgb) / 0.22); color: var(--accent); flex: none; }
+  .fx-icon :global(.icon) { width: 1.4rem; height: 1.4rem; }
+  .fx-meta { display: grid; gap: 0.1rem; min-width: 0; }
+  .fx-name { font-family: var(--font-label); font-size: var(--step--2); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); overflow-wrap: anywhere; }
+  .fx-dims { font-family: var(--font-label); font-size: 0.6875rem; letter-spacing: 0.08em; color: var(--muted); }
+  .fx-empty { padding: 1rem 0.6rem; margin: 0; color: var(--muted); font-size: var(--step--1); }
+  .actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.8rem; margin-top: 1.2rem; }
+
+  .quest-progress { margin-top: 2rem; max-width: 68ch; }
+  .quest-progress h2 { font-size: var(--step-1); color: var(--accent); margin-bottom: 0.6rem; }
+  .quest-progress ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+  .quest-progress li { display: grid; grid-template-columns: 1.1rem 1fr; gap: 0.6rem; color: var(--muted); font-size: var(--step--1); }
+  .quest-progress li.done { color: var(--soft); }
+  .tick { width: 1.1rem; height: 1.1rem; border: 1px solid var(--line); display: grid; place-items: center; color: var(--accent); }
+  .done .tick { border-color: var(--accent); }
+  .tick :global(.icon) { width: 0.9rem; height: 0.9rem; }
+
+  .about { margin-top: 2.4rem; }
+  .about-label { color: var(--text); margin-bottom: 1rem; }
+  @media (max-width: 860px) { .top { grid-template-columns: 1fr; } }
+</style>

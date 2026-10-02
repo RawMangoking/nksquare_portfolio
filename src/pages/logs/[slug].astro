@@ -1,0 +1,17 @@
+---
+import { getCollection } from 'astro:content';
+import HUD from '../../layouts/HUD.astro';
+import LogEntry from '../../components/LogEntry.astro';
+import OlderLogs from '../../components/OlderLogs.astro';
+
+export async function getStaticPaths() {
+  const logs = (await getCollection('logs')).sort((a, b) => b.data.start.valueOf() - a.data.start.valueOf());
+  return logs.map((entry) => ({ params: { slug: entry.id }, props: { entry, others: logs.filter((l) => l.id !== entry.id) } }));
+}
+const { entry, others } = Astro.props;
+---
+<HUD title={`${entry.data.title}, ${entry.data.org}`} active="logs" description={entry.data.boxes[0]?.text}>
+  <h1 class="stage-title">Data log dump initialized.</h1>
+  <LogEntry entry={entry} />
+  <OlderLogs entries={others} heading="Other logs:" />
+</HUD>

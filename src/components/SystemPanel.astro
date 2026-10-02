@@ -1,0 +1,29 @@
+---
+import Icon from './Icon.astro';
+---
+<div class="system">
+  <button type="button" class="row" data-toggle-sound aria-pressed="false" data-sfx>
+    <span>Sound effects</span>
+    <span class="box" aria-hidden="true"><Icon name="check" class="on" /><Icon name="cross" class="off" /></span>
+  </button>
+  <button type="button" class="row row--outline" data-open="dlg-settings" data-sfx>
+    <span>Visual settings</span>
+    <Icon name="gear" />
+  </button>
+</div>
+
+<style>
+  .system { display: grid; gap: 0.5rem; }
+  .row {
+    display: flex; align-items: center; justify-content: space-between; width: 100%;
+    padding: 0.2rem 0 0.2rem 0.4rem; min-height: 2.2rem; cursor: pointer; background: none; border: 0;
+    font-family: var(--font-display); font-size: var(--step-1); text-transform: uppercase; color: var(--accent); text-align: left;
+  }
+  .row--outline { border: 1px solid var(--line); padding-right: 0.5rem; }
+  .row--outline:hover { border-color: var(--accent); }
+  .box { width: 1.9rem; height: 1.9rem; display: grid; place-items: center; border: 1px solid var(--line); color: var(--muted); }
+  .box :global(.on) { display: none; }
+  [aria-pressed='true'] .box { border-color: var(--accent); color: var(--accent); }
+  [aria-pressed='true'] .box :global(.on) { display: block; }
+  [aria-pressed='true'] .box :global(.off) { display: none; }
+</style>

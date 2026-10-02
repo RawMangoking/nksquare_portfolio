@@ -1,0 +1,13 @@
+---
+import { getCollection } from 'astro:content';
+import HUD from '../../layouts/HUD.astro';
+import LogEntry from '../../components/LogEntry.astro';
+import OlderLogs from '../../components/OlderLogs.astro';
+const logs = (await getCollection('logs')).sort((a, b) => b.data.start.valueOf() - a.data.start.valueOf());
+const [latest, ...older] = logs;
+---
+<HUD title="Logs" active="logs" description="Internships and research experience of Narenkarthik Kesavamoorthy.">
+  <h1 class="stage-title">Data log dump initialized.</h1>
+  <LogEntry entry={latest} />
+  <OlderLogs entries={older} />
+</HUD>

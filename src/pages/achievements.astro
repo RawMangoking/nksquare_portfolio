@@ -1,0 +1,139 @@
+---
+import { getImage } from 'astro:assets';
+import HUD from '../layouts/HUD.astro';
+import AchievementIcon from '../components/AchievementIcon.astro';
+import Icon from '../components/Icon.astro';
+import { achievements } from '../data/achievements';
+
+const items = await Promise.all(
+  achievements.map(async (a) => ({
+    ...a,
+    full: a.proof ? await getImage({ src: a.proof.image, width: Math.min(1600, a.proof.image.width), format: 'webp' }) : null,
+  })),
+);
+const achieved = items.filter((a) => a.status === 'achieved');
+const pending = items.filter((a) => a.status === 'in-progress');
+const pct = achieved.length / items.length;
+const R = 46, C = 2 * Math.PI * R;
+---
+<HUD title="Achievements" active="achievements" description="Awards, certificates and goals of Narenkarthik Kesavamoorthy.">
+  <h1 class="stage-title">Achievements</h1>
+  <div class="layout">
+    <aside class="side">
+      <div class="ring box">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r={R} fill="none" stroke="#262626" stroke-width="9" />
+          <circle cx="60" cy="60" r={R} fill="none" stroke="currentColor" stroke-width="9" stroke-dasharray={`${C * pct} ${C}`} transform="rotate(-90 60 60)" />
+        </svg>
+        <p class="ring-num">{achieved.length}/{items.length}</p>
+        <p class="label ring-label">Unlocked</p>
+      </div>
+      <p class="side-text">I keep a set of goals for myself and track them here. Badges with a record attached open the certificate or photo.</p>
+      <fieldset class="filters">
+        <legend class="sr-only">Show</legend>
+        <label><input type="checkbox" value="achieved" checked /><span>Achieved</span></label>
+        <label><input type="checkbox" value="in-progress" checked /><span>In progress</span></label>
+      </fieldset>
+    </aside>
+
+    <div class="lists">
+      <section data-group="achieved" aria-labelledby="h-achieved">
+        <h2 id="h-achieved" class="label">Achieved:</h2>
+        <ul class="cards">
+          {achieved.map((a) => (
+            <li class={`card r-${a.rarity}`}>
+              <div class="badge"><AchievementIcon icon={a.icon} /><span class="rarity">{a.rarity}</span></div>
+              <div class="card-body">
+                <h3>{a.title}</h3>
+                <p>{a.text}</p>
+                <div class="card-foot">
+                  <span>{a.when}</span>
+                  {a.full && (
+                    <button type="button" class="rec" data-view="achievement-records" data-full={a.full.src} data-w={a.full.attributes.width} data-h={a.full.attributes.height} data-caption={a.proof!.caption} data-name={a.title}>
+                      View record <Icon name="image" />
+                    </button>
+                  )}
+                  {!a.full && a.href && <a class="rec" href={a.href}>Details <Icon name="arrow-right" /></a>}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section data-group="in-progress" aria-labelledby="h-progress">
+        <h2 id="h-progress" class="label">To be achieved:</h2>
+        <ul class="cards">
+          {pending.map((a) => (
+            <li class={`card is-pending r-${a.rarity}`}>
+              <div class="badge"><AchievementIcon icon={a.icon} /><span class="rarity">{a.rarity}</span></div>
+              <div class="card-body">
+                <h3>{a.title}</h3>
+                <p>{a.text}</p>
+                <div class="card-foot">
+                  <span>{a.when}</span>
+                  {a.href && <a class="rec" href={a.href}>Details <Icon name="arrow-right" /></a>}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  </div>
+</HUD>
+
+<script>
+  const boxes = document.querySelectorAll<HTMLInputElement>('.filters input');
+  const sync = () => boxes.forEach((b) => {
+    const g = document.querySelector<HTMLElement>(`[data-group="${b.value}"]`);
+    if (g) g.hidden = !b.checked;
+  });
+  boxes.forEach((b) => b.addEventListener('change', sync));
+</script>
+
+<style>
+  .layout { display: grid; grid-template-columns: minmax(160px, 210px) minmax(0, 620px); gap: clamp(1.2rem, 3vw, 2.4rem); justify-content: center; }
+  .side { display: grid; gap: 1rem; align-content: start; }
+  .ring { position: relative; display: grid; place-items: center; padding: 1.2rem; color: var(--soft); }
+  .ring svg { width: 120px; height: 120px; color: var(--soft); }
+  .ring-num { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -70%); margin: 0; font-family: var(--font-display); font-size: var(--step-2); color: var(--text); }
+  .ring-label { margin-top: 0.4rem; text-align: center; }
+  .side-text { font-family: var(--font-label); font-size: var(--step--2); letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.6; color: var(--muted); }
+  .filters { border: 0; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+  .filters label { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-family: var(--font-display); font-size: var(--step-1); text-transform: uppercase; color: var(--text); }
+  .filters input { appearance: none; width: 1.1rem; height: 1.1rem; border: 1.5px solid var(--accent); margin: 0; display: grid; place-items: center; cursor: pointer; }
+  .filters input:checked::after { content: ''; width: 0.55rem; height: 0.55rem; background: var(--accent); }
+
+  .lists { display: grid; gap: 2.2rem; }
+  .lists h2 { color: var(--text); margin-bottom: 0.6rem; }
+  .cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
+  .card {
+    --r: var(--epic);
+    display: grid; grid-template-columns: 96px 1fr; border: 1px solid color-mix(in srgb, var(--r) 55%, transparent);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--r) 14%, transparent), transparent 70%), rgb(10 9 9 / 0.75);
+  }
+  .r-legendary { --r: var(--legendary); }
+  .r-epic { --r: var(--epic); }
+  .r-rare { --r: var(--rare); }
+  .r-uncommon { --r: var(--uncommon); }
+  .badge { display: grid; grid-template-rows: 1fr auto; color: var(--r); border-right: 1px solid color-mix(in srgb, var(--r) 30%, transparent); }
+  .badge :global(svg) { padding: 0.7rem 0.8rem 0.4rem; }
+  .rarity { display: block; text-align: center; background: var(--r); color: #000; font-family: var(--font-label); font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.15rem 0; }
+  .card-body { padding: 0.8rem 1rem 0; display: flex; flex-direction: column; }
+  .card-body h3 { font-size: var(--step-1); color: var(--r); margin-bottom: 0.35rem; }
+  .card-body p { font-size: var(--step--1); line-height: 1.4; margin-bottom: 0.7rem; }
+  .card-foot {
+    margin: auto -1rem 0; padding: 0.35rem 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    background: rgb(0 0 0 / 0.35); font-family: var(--font-label); font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--soft);
+  }
+  .rec { display: inline-flex; align-items: center; gap: 0.35rem; background: none; border: 0; padding: 0; cursor: pointer; color: var(--r); font: inherit; letter-spacing: inherit; text-transform: inherit; text-decoration: none; }
+  .rec:hover { text-decoration: underline; }
+  .is-pending { filter: saturate(0.55); opacity: 0.8; }
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: 1fr; }
+    .side { grid-template-columns: auto 1fr; align-items: center; }
+    .filters { grid-column: 1 / -1; grid-auto-flow: column; justify-content: start; gap: 1.4rem; }
+    .card { grid-template-columns: 76px 1fr; }
+  }
+</style>

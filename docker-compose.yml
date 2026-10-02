@@ -1,0 +1,9 @@
+services:
+  web:
+    build: .
+    image: nksquare-portfolio
+    container_name: nksquare-portfolio
+    ports:
+      - "8080:80"        # open http://localhost:8080
+    restart: unless-stopped
+    mem_limit: 64m       # nginx serving static files uses ~5-10 MB
