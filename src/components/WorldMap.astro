@@ -25,6 +25,7 @@ const dotted = new Set(['702', '690', '064', '144', '784', '756']);
         <li><button type="button" data-country-chip={v.id}>{v.name}</button></li>
       ))}
     </ul>
+    <p class="note">Hover or tap a country for details.</p>
   </figcaption>
   <script type="application/json" id="map-data" set:html={JSON.stringify(Object.fromEntries(visited.map((v) => [v.id, { name: v.name, note: v.note ?? '' }])))} />
 </figure>

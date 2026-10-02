@@ -73,7 +73,7 @@ export const achievements: Achievement[] = [
   },
   {
     title: 'Finish the capstone',
-    text: 'Train and test the door-opening robot hand on doors it has never seen.',
+    text: 'Train the robot hand to open a door reliably, even when its friction and weight change.',
     rarity: 'epic',
     icon: 'hand',
     status: 'in-progress',

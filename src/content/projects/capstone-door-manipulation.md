@@ -1,7 +1,7 @@
 ---
 title: Reinforcement learning for generalized door manipulation
 cardTitle: Door-opening robot hand
-brief: Can a robot hand trained on randomized doors be better?
+brief: Can a robot hand learn to open a door that feels different each time?
 kind: main
 status: active
 order: 1
@@ -33,7 +33,7 @@ We split the task into three stages, each with its own policy that controls only
 2. **Grasp and turn the handle** (12 actions; the middle, ring and little fingers move together as one)
 3. **Push or pull the door open** (4 actions)
 
-To test generalization, we train the policies twice: once on a single fixed door, and once with randomized door mass, hinge and handle friction, and starting hand pose. Both are then tested on the same set of doors neither has seen, measuring success rate, completion time and final door angle.
+To test generalization, we train the policies twice: once on a single fixed door, and once with randomized door mass, hinge and handle friction, and starting hand pose. Both are then tested on door settings neither saw during training, measuring success rate, completion time and final door angle.
 
 We don't assume randomization or modular policies will win. The point is to measure it.
 

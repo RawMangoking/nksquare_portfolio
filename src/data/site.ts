@@ -35,8 +35,7 @@ export const about = {
 export const quest = {
   label: 'Final-year capstone',
   name: 'Door-opening robot hand',
-  goal: 'Train a robot hand with reinforcement learning to open doors it has never seen, and test whether randomized training and smaller task-specific policies make that easier.',
-  href: '/creations/capstone-door-manipulation/',
+  goal: 'Train a robot hand with reinforcement learning to open a door that feels different each time, with changing friction and weight.',  href: '/creations/capstone-door-manipulation/',
   team: ['Naren Kumar C', 'Lakshmi Narayanan P'],
   mentor: 'Dr. Priya GL',
   objectives: [
@@ -46,8 +45,8 @@ export const quest = {
     { text: 'RL environment with reach, handle and door stages', done: true },
     { text: 'Randomize the door’s physical parameters', done: false },
     { text: 'Train with fixed vs randomized doors', done: false },
-    { text: 'Test on unseen doors', done: false },
-  ],
+    { text: 'Test on new door conditions', done: false },
+    ],
 };
 
 /** Travel map. Country ids are ISO 3166 numeric codes. Add a photo later by setting `photo`. */
