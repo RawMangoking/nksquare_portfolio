@@ -7,6 +7,7 @@ status: complete
 order: 4
 tech: [Arduino Uno, ESP32, MQTT, Node-RED, C++]
 repo: https://github.com/narenkumarchandran/Smart-AMBU-MONITOR
+team: [Naren Kumar C, Lakshmi Narayanan P]
 highlight: { value: '~20 Hz', label: 'pressure sampling, streamed live over MQTT' }
 cover: ../../assets/projects/ambu-real-device-setup.png
 coverAlt: The Smart-AMBU sensor hardware attached to a manual resuscitator.
