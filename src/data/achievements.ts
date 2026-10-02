@@ -37,7 +37,7 @@ export const achievements: Achievement[] = [
     href: '/logs/sutd-roar-lab/',
   },
   {
-    title: 'Exhibitor, Raikan Ilmu 2026',
+    title: 'Volunteer, Raikan Ilmu 2026',
     text: 'Showcased Saber to the public at Our Tampines Hub, Singapore, and answered visitors’ questions.',
     rarity: 'epic',
     icon: 'stage',
